@@ -1,0 +1,165 @@
+[
+  { "module": "Dashboard", "actions": ["read"] },
+
+  { "module": "Branch", "actions": ["create", "read", "update", "delete"] },
+  {
+  "module": "Date",
+  "actions": ["create", "read"]
+},
+  {
+    "module": "Branch_Assign",
+    "actions": ["create", "read", "update", "delete"]
+  },
+
+  { "module": "Department", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Designation",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Employee", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Role", "actions": ["create", "read", "update", "delete"] },
+  { "module": "User", "actions": ["create", "read", "update", "delete"] },
+
+  { "module": "Group", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Ledger", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Particular", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Chart_Of_Account",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Voucher", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Receipt_Voucher",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "Payment_Voucher",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "Contra_Voucher",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "Journal_Voucher",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "Expense_Voucher",
+    "actions": ["create", "read", "update", "delete"]
+  },
+
+  { "module": "Purchase", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Purchase_Return",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Sales", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Sales_Return",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Quotation", "actions": ["create", "read", "update", "delete"] },
+
+  { "module": "Service", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Service_Sales",
+    "actions": ["create", "read", "update", "delete"]
+  },
+
+  { "module": "CRM_Dashboard", "actions": ["read"] },
+  {
+    "module": "Todays_Call",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Pending_Call", "actions": ["read", "update"] },
+  {
+    "module": "Todays_Follow_Up",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "CRM_Reporting", "actions": ["read"] },
+
+  { "module": "Audit_Log", "actions": ["read"] },
+
+  { "module": "Report", "actions": ["read"] },
+  { "module": "Profit_Loss", "actions": ["read"] },
+  { "module": "Trial_Balance", "actions": ["read"] },
+  { "module": "General_Ledger", "actions": ["read"] },
+  { "module": "Second_General_Ledger", "actions": ["read"] },
+  { "module": "Voucher_Ledger", "actions": ["read"] },
+  { "module": "Profit_And_Loss", "actions": ["read"] },
+  { "module": "Balance_Sheet", "actions": ["read"] },
+  { "module": "Income_Statement", "actions": ["read"] },
+  { "module": "Owner_Security", "actions": ["read"] },
+
+  {
+    "module": "ChequeManager",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Bank", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Cheque", "actions": ["create", "read", "update", "delete"] },
+
+  {
+    "module": "Inventory",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "ProductManagement",
+    "actions": ["create", "read", "update", "delete"]
+  },
+
+  { "module": "Category", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "SubCategory",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Unit", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Brand", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Product", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Size", "actions": ["create", "read", "update", "delete"] },
+  { "module": "Color", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Product_Variation",
+    "actions": ["create", "read", "update", "delete"]
+  },
+
+  { "module": "Payroll", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "Leave_Apply",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "Leave_Day_Setup",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "Salary_Structure",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  { "module": "Salary", "actions": ["create", "read", "update", "delete"] },
+
+  { "module": "crm", "actions": ["create", "read", "update", "delete"] },
+  {
+    "module": "crm-dashboard",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "todays-call",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "pending-call",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "todays-follow-up",
+    "actions": ["create", "read", "update", "delete"]
+  },
+  {
+    "module": "crm-reporting",
+    "actions": ["create", "read", "update", "delete"]
+  },
+
+  { "module": "Settings", "actions": ["read", "update"] },
+  { "module": "Access_Setup", "actions": ["read", "update"] }
+]

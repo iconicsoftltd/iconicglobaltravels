@@ -1,0 +1,74 @@
+# ===============================
+# Node / NPM
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===============================
+# Environment variables
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Build outputs
+# ===============================
+# React
+frontend/build/
+frontend/dist/
+
+# Express / Backend
+backend/dist/
+backend/build/
+
+# General
+dist/
+build/
+
+# ===============================
+# Logs
+# ===============================
+logs/
+*.log
+
+# ===============================
+# Runtime data
+# ===============================
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ===============================
+# OS files
+# ===============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===============================
+# Editor / IDE
+# ===============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===============================
+# Testing
+# ===============================
+coverage/
+
+# ===============================
+# Misc
+# ===============================
+.cache/
+.temp/
+*.local

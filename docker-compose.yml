@@ -1,0 +1,159 @@
+# ================================================================
+#  Project: ERP / Accounting System
+#  Stack  : React (Vite) + Express (TypeScript) + Prisma + MySQL
+#  Mode   : Development (bind mounts + hot reload)
+# ================================================================
+#  Public entry: host-level Nginx on 80/443 (not defined in this file).
+#
+#  Env files:
+#  - Root `.env` — Compose interpolates ${VAR} from here (and the shell):
+#      DB_ROOT_PASSWORD, DB_NAME, DB_USER, DB_PASSWORD, VITE_API_URL,
+#      NODE_ENV, CORS_ORIGINS
+#    `DOMAIN` in .env.example is for Nginx / Certbot docs on the VPS; this
+#    compose file does not reference DOMAIN.
+#  - `backend/.env` — loaded into the backend (and prisma-studio) containers
+#    via env_file (secrets, AUTH_*, etc.); DATABASE_URL is overridden below.
+#
+#  Second site on same VPS: copy repo, new root `.env`, rename container_name /
+#  volume / network, map host ports e.g. 3100:3000 and 5100:5000 — see
+#  Deployment_guide_2nd.md §4.4–4.5.
+# ================================================================
+
+services:
+
+  # ──────────────────────────────────────────────────────────────
+  # MySQL 8 Database (no host port — internal network only)
+  # ──────────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: erp_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE:      ${DB_NAME}
+      MYSQL_USER:          ${DB_USER}
+      MYSQL_PASSWORD:      ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "root", "--password=${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ──────────────────────────────────────────────────────────────
+  # Backend — Node.js + Express + TypeScript + Prisma
+  # ──────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: erp_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: "mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}"
+      NODE_ENV:     ${NODE_ENV:-development}
+      PORT:         5000
+      # Reason: comma-separated extra origins for browser + Docker dev (see backend .env.example)
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - erp-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:5000/',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    command: >
+      sh -c "
+        echo 'Running Prisma migrations...' &&
+        npx prisma migrate deploy &&
+        echo 'Starting server...' &&
+        npm run dev
+      "
+
+  # ──────────────────────────────────────────────────────────────
+  # Frontend — Vite + React + TypeScript
+  # ──────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: erp_frontend
+    restart: unless-stopped
+    environment:
+      # Reason: Vite only exposes env vars prefixed with VITE_
+      VITE_API_URL: ${VITE_API_URL}
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    # Reason: wait until backend healthcheck (GET / → 200) passes — avoids
+    # "dependency backend failed to start" when frontend starts before API.
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - erp-network
+
+  # ──────────────────────────────────────────────────────────────
+  # Prisma Studio — DB GUI (optional, dev only)
+  # Run: docker compose --profile tools up prisma-studio
+  # ──────────────────────────────────────────────────────────────
+  prisma-studio:
+    build:
+      context: ./backend
+      target: development
+    container_name: erp_prisma_studio
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: "mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}"
+    ports:
+      - "127.0.0.1:5555:5555"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - erp-network
+    command: npx prisma studio --port 5555 --browser none
+    profiles:
+      - tools
+
+# ──────────────────────────────────────────────────────────────
+# Volumes & Networks
+# ──────────────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  erp-network:
+    driver: bridge

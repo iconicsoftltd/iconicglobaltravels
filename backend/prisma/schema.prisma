@@ -1,0 +1,1085 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Permission {
+  id             Int              @id @default(autoincrement())
+  module         String
+  action         String
+  description    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  RolePermission RolePermission[]
+  UserPermission UserPermission[]
+
+  @@unique([module, action])
+}
+
+model Department {
+  id        Int        @id @default(autoincrement())
+  branchId  Int
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  Employee  Employee[]
+}
+
+model Role {
+  id              Int              @id @default(autoincrement())
+  branchId        Int
+  name            String
+  description     String?
+  isSystemRole    Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  branch          Branch           @relation(fields: [branchId], references: [id])
+  rolePermissions RolePermission[]
+  User            User[]
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+  isAllowed    Boolean    @default(false)
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+model Branch {
+  id                    Int                     @id @default(autoincrement())
+  name                  String
+  address               String
+  logo                  String?
+  email                 String?
+  phone                 String?
+  isActive              Boolean                 @default(true)
+  users                 UserBranch[]
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Department            Department[]
+  Role                  Role[]
+  Employee              Employee[]
+  Designation           Designation[]
+  Category              Category[]
+  SubCategory           SubCategory[]
+  Unit                  Unit[]
+  Size                  Size[]
+  Color                 Color[]
+  Brand                 Brand[]
+  Product               Product[]
+  ProductVariation      ProductVariation[]
+  Purchase              Purchase[]
+  PurchaseProduct       PurchaseProduct[]
+  Sale                  Sale[]
+  PurchaseReturn        PurchaseReturn[]
+  PurchaseReturnProduct PurchaseReturnProduct[]
+  salesReturns          SalesReturn[]
+  salesReturnProducts   SalesReturnProduct[]
+  services              Service[]
+  serviceSales          ServiceSale[]
+  quotations            Quotation[]
+  banks                 Bank[]
+  cheques               Cheque[]
+  salaryStructures      SalaryStructure[]
+  leaveDaySetups        LeaveDaySetup[]
+  leaveApplies          LeaveApply[]
+  salaries              Salary[]
+}
+
+model UserBranch {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  branchId  Int
+  user      User     @relation(fields: [userId], references: [id])
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id            Int          @id @default(autoincrement())
+  designationId Int
+  branchId      Int
+  name          String
+  email         String
+  phone         String
+  address       String
+  nid           String
+  uuid          String
+  salary        Float
+  joiningDate   String
+  image         String
+  departmentId  Int
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  branch        Branch       @relation(fields: [branchId], references: [id])
+  designation   Designation  @relation(fields: [designationId], references: [id])
+  department    Department   @relation(fields: [departmentId], references: [id])
+  User          User[]
+  leaveApplies  LeaveApply[]
+}
+
+model User {
+  id           Int              @id @default(autoincrement())
+  employeeId   Int
+  password     String
+  roleId       Int
+  isActive     Boolean          @default(true)
+  verifiedCode String?
+  isVerified   Boolean          @default(false)
+  role         Role             @relation(fields: [roleId], references: [id])
+  employee     Employee         @relation(fields: [employeeId], references: [id])
+  branches     UserBranch[]
+  permissions  UserPermission[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model UserPermission {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  permissionId Int
+  isAllowed    Boolean    @default(true)
+  user         User       @relation(fields: [userId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+}
+
+model Designation {
+  id        Int        @id @default(autoincrement())
+  branchId  Int
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  branch    Branch     @relation(fields: [branchId], references: [id])
+  Employee  Employee[]
+}
+
+enum Account {
+  Assets
+  Liability
+  Equity
+  Income
+  Expense
+  Other_Accounts
+}
+
+model Group {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  account     Account
+  accountType String
+  code        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Ledger      Ledger[]
+}
+
+model Ledger {
+  id             Int      @id @default(autoincrement())
+  branchId       Int
+  groupAccountId Int
+  ledgerType     String
+  code           String?
+  balance        Float    @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  group       Group        @relation(fields: [groupAccountId], references: [id])
+  particulars Particular[]
+}
+
+enum BalanceType {
+  Credit
+  Debit
+}
+
+model Particular {
+  id                  Int                   @id @default(autoincrement())
+  branchId            Int
+  employeeId          Int?
+  ledgerId            Int
+  salary              Float                 @default(0)
+  type                BalanceType // Debit / Credit
+  balance             Float
+  openingBalance      Float
+  openingBalanceType  BalanceType
+  openingBalanceDate  DateTime              @default(now())
+  companyName         String?
+  accountType         String
+  mobileNumber        String?
+  email               String?
+  address             String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  ledger              Ledger                @relation(fields: [ledgerId], references: [id])
+  ParticularOnVoucher ParticularOnVoucher[]
+  supplier            Purchase[]            @relation("supplier")
+  account             Purchase[]            @relation("account")
+  customer            Sale[]                @relation("customer")
+  saleAccount         Sale[]                @relation("saleAccount")
+  returnSupplier      PurchaseReturn[]      @relation("supplier")
+  returnAccount       PurchaseReturn[]      @relation("account")
+  returnCustomer      SalesReturn[]         @relation("returnCustomer")
+  returnSalesAccount  SalesReturn[]         @relation("returnAccount")
+  serviceCustomer     ServiceSale[]         @relation("serviceCustomer")
+  serviceAccount      ServiceSale[]         @relation("serviceAccount")
+  quotations          Quotation[]
+  cheques             Cheque[]
+  employeeSalary      Salary[]              @relation("employee")
+  payment             Salary[]              @relation("account")
+}
+
+enum VoucherType {
+  PAYMENT
+  RECEIPT
+  CONTRA
+  JOURNAL
+  PURCHASE
+  PURCHASE_RETURN
+  SALES
+  SERVICE_SALES
+  SALES_RETURN
+  EXPENSE
+}
+
+model Voucher {
+  id               Int                   @id @default(autoincrement())
+  purchaseId       Int?
+  purchaseReturnId Int?
+  salesReturnId    Int?
+  saleId           Int?
+  serviceSaleId    Int?
+  salaryId         Int?
+  branchId         Int
+  voucherNo        String
+  type             VoucherType
+  date             DateTime
+  narration        String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  particulars      ParticularOnVoucher[]
+  purchase         Purchase?             @relation(fields: [purchaseId], references: [id])
+  purchaseReturn   PurchaseReturn?       @relation(fields: [purchaseReturnId], references: [id])
+  salesReturn      SalesReturn?          @relation(fields: [salesReturnId], references: [id])
+  sale             Sale?                 @relation(fields: [saleId], references: [id])
+  serviceSale      ServiceSale?          @relation(fields: [serviceSaleId], references: [id])
+  salary           Salary?               @relation(fields: [salaryId], references: [id])
+}
+
+model VoucherAudit {
+  id          Int      @id @default(autoincrement())
+  voucherId   Int
+  branchId    Int
+  ip          String   @default("103.166.253.136")
+  userId      Int
+  action      String
+  description String?
+  data        Json?
+  createdAt   DateTime @default(now())
+}
+
+model ParticularOnVoucher {
+  id           Int         @id @default(autoincrement())
+  voucherId    Int
+  particularId Int
+  type         BalanceType
+  amount       Float
+  createdAt    DateTime    @default(now())
+  voucher      Voucher     @relation(fields: [voucherId], references: [id])
+  particular   Particular  @relation(fields: [particularId], references: [id])
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  branchId    Int
+  name        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  branch      Branch        @relation(fields: [branchId], references: [id])
+  SubCategory SubCategory[]
+  Product     Product[]
+}
+
+model SubCategory {
+  id         Int       @id @default(autoincrement())
+  branchId   Int
+  categoryId Int
+  name       String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  branch     Branch    @relation(fields: [branchId], references: [id])
+  category   Category  @relation(fields: [categoryId], references: [id])
+  Product    Product[]
+}
+
+model Unit {
+  id        Int       @id @default(autoincrement())
+  branchId  Int
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  branch    Branch    @relation(fields: [branchId], references: [id])
+  Product   Product[]
+}
+
+model Size {
+  id               Int                @id @default(autoincrement())
+  branchId         Int
+  name             String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  branch           Branch             @relation(fields: [branchId], references: [id])
+  ProductVariation ProductVariation[]
+}
+
+model Color {
+  id               Int                @id @default(autoincrement())
+  branchId         Int
+  name             String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  branch           Branch             @relation(fields: [branchId], references: [id])
+  ProductVariation ProductVariation[]
+}
+
+model Brand {
+  id        Int       @id @default(autoincrement())
+  branchId  Int
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  branch    Branch    @relation(fields: [branchId], references: [id])
+  Product   Product[]
+}
+
+model Product {
+  id               Int                @id @default(autoincrement())
+  branchId         Int
+  name             String
+  categoryId       Int
+  subCategoryId    Int
+  unitId           Int
+  brandId          Int
+  productCode      String?
+  image            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  branch           Branch             @relation(fields: [branchId], references: [id])
+  category         Category           @relation(fields: [categoryId], references: [id])
+  subCategory      SubCategory        @relation(fields: [subCategoryId], references: [id])
+  unit             Unit               @relation(fields: [unitId], references: [id])
+  brand            Brand              @relation(fields: [brandId], references: [id])
+  ProductVariation ProductVariation[]
+}
+
+model ProductVariation {
+  id                    Int                     @id @default(autoincrement())
+  branchId              Int
+  productId             Int
+  sizeId                Int
+  colorId               Int
+  salePrice             Float
+  wholeSalePrice        Float
+  damageQuantity        Int                     @default(0)
+  stockQuantity         Int                     @default(0)
+  saleQuantity          Int                     @default(0)
+  purchasePrice         Float                   @default(0)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  product               Product                 @relation(fields: [productId], references: [id])
+  branch                Branch                  @relation(fields: [branchId], references: [id])
+  size                  Size                    @relation(fields: [sizeId], references: [id])
+  color                 Color                   @relation(fields: [colorId], references: [id])
+  PurchaseProduct       PurchaseProduct[]
+  SaleProduct           SaleProduct[]
+  PurchaseReturnProduct PurchaseReturnProduct[]
+  salesReturnProducts   SalesReturnProduct[]
+  quotationProducts     QuotationProduct[]
+}
+
+model Purchase {
+  id                 Int               @id @default(autoincrement())
+  branchId           Int
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  date               DateTime
+  challanNo          String
+  supplierId         Int
+  paymentAccountId   Int
+  totalAmount        Float
+  totalPaymentAmount Float
+  dueAmount          Float
+  previousDue        Float
+  vat                Float             @default(0)
+  tc                 Float             @default(0)
+  branch             Branch            @relation(fields: [branchId], references: [id])
+  supplier           Particular        @relation("supplier", fields: [supplierId], references: [id])
+  account            Particular        @relation("account", fields: [paymentAccountId], references: [id])
+  Voucher            Voucher[]
+  PurchaseProduct    PurchaseProduct[]
+  PurchaseReturn     PurchaseReturn[]
+}
+
+model PurchaseProduct {
+  id                 Int              @id @default(autoincrement())
+  purchaseId         Int
+  branchId           Int
+  variationProductId Int
+  quantity           Int
+  damageQuantity     Int
+  unitPrice          Float
+  subTotal           Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  branch             Branch           @relation(fields: [branchId], references: [id])
+  purchase           Purchase         @relation(fields: [purchaseId], references: [id])
+  productVariation   ProductVariation @relation(fields: [variationProductId], references: [id])
+}
+
+model PurchaseReturn {
+  id                    Int                     @id @default(autoincrement())
+  branchId              Int
+  purchaseId            Int
+  date                  DateTime
+  challanNo             String
+  supplierId            Int
+  paymentAccountId      Int
+  totalAmount           Float
+  totalPaymentAmount    Float
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  branch                Branch                  @relation(fields: [branchId], references: [id])
+  purchase              Purchase                @relation(fields: [purchaseId], references: [id])
+  supplier              Particular              @relation("supplier", fields: [supplierId], references: [id])
+  account               Particular              @relation("account", fields: [paymentAccountId], references: [id])
+  PurchaseReturnProduct PurchaseReturnProduct[]
+  Voucher               Voucher[]
+}
+
+model PurchaseReturnProduct {
+  id                 Int              @id @default(autoincrement())
+  purchaseReturnId   Int
+  branchId           Int
+  variationProductId Int
+  quantity           Int
+  damageQuantity     Int
+  unitPrice          Float
+  subTotal           Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  branch             Branch           @relation(fields: [branchId], references: [id])
+  purchaseReturn     PurchaseReturn   @relation(fields: [purchaseReturnId], references: [id])
+  productVariation   ProductVariation @relation(fields: [variationProductId], references: [id])
+}
+
+model Sale {
+  id                 Int           @id @default(autoincrement())
+  branchId           Int
+  date               DateTime
+  invoiceNo          String
+  customerId         Int
+  paymentAccountId   Int
+  totalAmount        Float
+  totalPaymentAmount Float
+  dueAmount          Float
+  vat                Float         @default(0)
+  tc                 Float         @default(0)
+  discount           Float         @default(0)
+  branch             Branch        @relation(fields: [branchId], references: [id])
+  customer           Particular    @relation("customer", fields: [customerId], references: [id])
+  account            Particular    @relation("saleAccount", fields: [paymentAccountId], references: [id])
+  SaleProduct        SaleProduct[]
+  Voucher            Voucher[]
+  salesReturns       SalesReturn[]
+}
+
+model SaleProduct {
+  id                 Int              @id @default(autoincrement())
+  saleId             Int
+  branchId           Int
+  variationProductId Int
+  quantity           Int
+  unitPrice          Float
+  subTotal           Float
+  sale               Sale             @relation(fields: [saleId], references: [id])
+  productVariation   ProductVariation @relation(fields: [variationProductId], references: [id])
+}
+
+model SalesReturn {
+  id                  Int                  @id @default(autoincrement())
+  branchId            Int
+  saleId              Int
+  date                DateTime
+  invoiceNo           String
+  customerId          Int
+  paymentAccountId    Int
+  totalAmount         Float
+  totalPaymentAmount  Float
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  branch              Branch               @relation(fields: [branchId], references: [id])
+  sale                Sale                 @relation(fields: [saleId], references: [id])
+  customer            Particular           @relation("returnCustomer", fields: [customerId], references: [id])
+  account             Particular           @relation("returnAccount", fields: [paymentAccountId], references: [id])
+  salesReturnProducts SalesReturnProduct[]
+  vouchers            Voucher[]
+}
+
+model SalesReturnProduct {
+  id                 Int              @id @default(autoincrement())
+  salesReturnId      Int
+  branchId           Int
+  variationProductId Int
+  quantity           Int
+  damageQuantity     Int
+  unitPrice          Float
+  subTotal           Int
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  branch             Branch           @relation(fields: [branchId], references: [id])
+  salesReturn        SalesReturn      @relation(fields: [salesReturnId], references: [id])
+  productVariation   ProductVariation @relation(fields: [variationProductId], references: [id])
+}
+
+model Service {
+  id                  Int                  @id @default(autoincrement())
+  branchId            Int
+  name                String
+  price               Float
+  description         String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  branch              Branch               @relation(fields: [branchId], references: [id])
+  serviceSaleProducts ServiceSaleProduct[]
+}
+
+model ServiceSale {
+  id                 Int        @id @default(autoincrement())
+  branchId           Int
+  date               DateTime
+  invoiceNo          String
+  customerId         Int
+  paymentAccountId   Int
+  totalAmount        Float
+  totalPaymentAmount Float
+  dueAmount          Float
+  vat                Float      @default(0)
+  tc                 Float      @default(0)
+  discount           Float      @default(0)
+  branch             Branch     @relation(fields: [branchId], references: [id])
+  customer           Particular @relation("serviceCustomer", fields: [customerId], references: [id])
+  account            Particular @relation("serviceAccount", fields: [paymentAccountId], references: [id])
+
+  serviceSaleProducts ServiceSaleProduct[]
+  vouchers            Voucher[]
+}
+
+model ServiceSaleProduct {
+  id        Int         @id @default(autoincrement())
+  saleId    Int
+  branchId  Int
+  serviceId Int
+  quantity  Int
+  unitPrice Float
+  subTotal  Float
+  sale      ServiceSale @relation(fields: [saleId], references: [id])
+  service   Service     @relation(fields: [serviceId], references: [id])
+}
+
+model Quotation {
+  id                Int                @id @default(autoincrement())
+  branchId          Int
+  date              DateTime
+  invoiceNo         String
+  customerId        Int
+  totalAmount       Float
+  vat               Float              @default(0)
+  tc                Float              @default(0)
+  discount          Float              @default(0)
+  branch            Branch             @relation(fields: [branchId], references: [id])
+  customer          Particular         @relation(fields: [customerId], references: [id])
+  quotationProducts QuotationProduct[]
+}
+
+model QuotationProduct {
+  id                 Int              @id @default(autoincrement())
+  quotationId        Int
+  branchId           Int
+  variationProductId Int
+  quantity           Int
+  unitPrice          Float
+  subTotal           Float
+  quotation          Quotation        @relation(fields: [quotationId], references: [id])
+  productVariation   ProductVariation @relation(fields: [variationProductId], references: [id])
+}
+
+model Bank {
+  id        Int      @id @default(autoincrement())
+  branchId  Int
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  cheques   Cheque[]
+}
+
+model Cheque {
+  id           Int          @id @default(autoincrement())
+  branchId     Int
+  status       ChequeStatus @default(Pending)
+  bankId       Int
+  customerId   Int
+  chequeNumber String
+  amount       Float
+  checkDate    DateTime
+  submitDate   DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  branch       Branch       @relation(fields: [branchId], references: [id])
+  bank         Bank         @relation(fields: [bankId], references: [id])
+  customer     Particular   @relation(fields: [customerId], references: [id])
+}
+
+enum ChequeStatus {
+  Approved
+  Pending
+  Rejected
+}
+
+model ChequeLog {
+  id          Int          @id @default(autoincrement())
+  chequeId    Int
+  branchId    Int          @default(1)
+  ip          String
+  status      ChequeStatus
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime     @default(now())
+}
+
+model BranchLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model DepartmentLog {
+  id           Int      @id @default(autoincrement())
+  branchId     Int
+  ip           String
+  departmentId Int
+  action       String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data         Json
+  updatedById  Int // which user did it
+  createdAt    DateTime @default(now())
+}
+
+model DesignationLog {
+  id            Int      @id @default(autoincrement())
+  branchId      Int
+  ip            String
+  designationId Int
+  action        String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data          Json
+  updatedById   Int // which user did it
+  createdAt     DateTime @default(now())
+}
+
+model EmployeeLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  employeeId  Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model RoleLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  roleId      Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model UserLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  userId      Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model BranchAssignLog {
+  id             Int      @id @default(autoincrement())
+  branchId       Int
+  ip             String
+  branchAssignId Int
+  action         String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data           Json
+  updatedById    Int // which user did it
+  createdAt      DateTime @default(now())
+}
+
+model GroupLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  groupId     Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model LedgerLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  ledgerId    Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ParticularLog {
+  id           Int      @id @default(autoincrement())
+  branchId     Int
+  ip           String
+  particularId Int
+  action       String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data         Json
+  updatedById  Int // which user did it
+  createdAt    DateTime @default(now())
+}
+
+model BankLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  bankId      Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model PurchaseLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  purchaseId  Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model PurchaseReturnLog {
+  id               Int      @id @default(autoincrement())
+  branchId         Int
+  ip               String
+  purchaseReturnId Int
+  action           String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data             Json
+  updatedById      Int // which user did it
+  createdAt        DateTime @default(now())
+}
+
+model SalesLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  saleId      Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model SalesReturnLog {
+  id           Int      @id @default(autoincrement())
+  branchId     Int
+  ip           String
+  saleReturnId Int
+  action       String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data         Json
+  updatedById  Int // which user did it
+  createdAt    DateTime @default(now())
+}
+
+model QuotationLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  quotationId Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ServiceLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  serviceId   Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ServiceSalesLog {
+  id             Int      @id @default(autoincrement())
+  branchId       Int
+  ip             String
+  serviceSalesId Int
+  action         String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data           Json
+  updatedById    Int // which user did it
+  createdAt      DateTime @default(now())
+}
+
+model SalaryStructureLog {
+  id                Int      @id @default(autoincrement())
+  branchId          Int
+  ip                String
+  salaryStructureId Int
+  action            String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data              Json
+  updatedById       Int // which user did it
+  createdAt         DateTime @default(now())
+}
+
+model LeaveDaySetupLog {
+  id              Int      @id @default(autoincrement())
+  branchId        Int
+  ip              String
+  leaveDaySetupId Int
+  action          String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data            Json
+  updatedById     Int // which user did it
+  createdAt       DateTime @default(now())
+}
+
+model LeaveApplyLog {
+  id           Int      @id @default(autoincrement())
+  branchId     Int
+  ip           String
+  leaveApplyId Int
+  action       String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data         Json
+  updatedById  Int // which user did it
+  createdAt    DateTime @default(now())
+}
+
+model ProductCategoryLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  categoryId  Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ProductSubCategoryLog {
+  id            Int      @id @default(autoincrement())
+  branchId      Int
+  ip            String
+  subCategoryId Int
+  action        String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data          Json
+  updatedById   Int // which user did it
+  createdAt     DateTime @default(now())
+}
+
+model BrandLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  brandId     Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model UnitLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  unitId      Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ProductVariationLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  variationId Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ProductLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  productId   Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model SizeLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  sizeId      Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model ColorLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  ip          String
+  colorId     Int
+  action      String // e.g. "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+  data        Json
+  updatedById Int // which user did it
+  createdAt   DateTime @default(now())
+}
+
+model SalaryLog {
+  id          Int      @id @default(autoincrement())
+  branchId    Int
+  salaryId    Int
+  action      String // CREATED / UPDATED / DELETED
+  data        Json
+  ip          String?
+  updatedById Int?
+  createdAt   DateTime @default(now())
+  salary      Salary   @relation(fields: [salaryId], references: [id])
+}
+
+model SalaryStructure {
+  id           Int      @id @default(autoincrement())
+  branchId     Int
+  basicSalary  Float    @default(0)
+  houseRent    Float    @default(0)
+  medical      Float    @default(0)
+  transport    Float    @default(0)
+  food         Float    @default(0)
+  casualLeave  Int      @default(0)
+  medicalLeave Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  branch       Branch   @relation(fields: [branchId], references: [id])
+}
+
+model LeaveDaySetup {
+  id           Int          @id @default(autoincrement())
+  branchId     Int
+  name         String
+  days         Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  branch       Branch       @relation(fields: [branchId], references: [id])
+  leaveApplies LeaveApply[]
+}
+
+model LeaveApply {
+  id              Int           @id @default(autoincrement())
+  branchId        Int
+  employeeId      Int
+  status          ChequeStatus  @default(Pending)
+  leaveId         Int
+  leaveLeft       Int
+  fromDays        DateTime
+  toDays          DateTime
+  applyDays       Int
+  approveDays     Int?
+  approveFromDate DateTime?
+  approveToDate   DateTime?
+  note            String?
+  subject         String
+  content         String        @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  branch          Branch        @relation(fields: [branchId], references: [id])
+  employee        Employee      @relation(fields: [employeeId], references: [id])
+  leaveType       LeaveDaySetup @relation(fields: [leaveId], references: [id])
+}
+
+model Salary {
+  id                Int      @id @default(autoincrement())
+  branchId          Int
+  employeeId        Int
+  paymentAccountId  Int
+  month             Int // 1 - 12
+  year              Int
+  grossSalary       Float    @default(0)
+  weekendAllowance  Float    @default(0)
+  holidayAllowance  Float    @default(0)
+  bonus             Float    @default(0)
+  provident         Float    @default(0)
+  advance           Float    @default(0)
+  lateFee           Float    @default(0)
+  absentFee         Float    @default(0)
+  unauthorizedLeave Float    @default(0)
+  deduct            Float    @default(0)
+  paymentAmount     Float    @default(0)
+  note              String?
+  createdById       Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  branch     Branch      @relation(fields: [branchId], references: [id])
+  employee   Particular  @relation("employee", fields: [employeeId], references: [id])
+  payment    Particular  @relation("account", fields: [paymentAccountId], references: [id])
+  salaryLogs SalaryLog[]
+  vouchers   Voucher[]
+
+  particularId Int?
+
+  @@unique([branchId, employeeId, month, year])
+}

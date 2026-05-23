@@ -1,0 +1,67 @@
+# ================================================================
+#  Backend Dockerfile
+#  Stack: Node.js + Express + TypeScript + Prisma
+# ================================================================
+
+# ── Stage 1: Development (ts-node-dev live reload) ─────────────
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+# package.json আগে copy করো (Docker layer cache)
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY prisma ./prisma/
+
+RUN npm install
+
+# Prisma client generate (Linux binary লাগবে)
+RUN npx prisma generate
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["npm", "run", "dev"]
+
+
+# ── Stage 2: Builder (TypeScript → JavaScript compile) ─────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY prisma ./prisma/
+
+RUN npm install
+
+RUN npx prisma generate
+
+COPY . .
+
+# TypeScript compile
+RUN npm run build
+
+
+# ── Stage 3: Production (compiled JS only, minimal image) ──────
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# শুধু production dependencies
+COPY package*.json ./
+COPY prisma ./prisma/
+
+RUN npm install --omit=dev
+
+# Prisma client generate (production binary)
+
+RUN npx prisma generate
+
+# Compiled files
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 5000
+
+CMD ["node", "dist/server.js"]
